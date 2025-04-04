@@ -28,14 +28,16 @@ def sendData():
     deliveries = this.unsentDeliveries.copy()
     this.unsentDeliveries = []
     if len(deliveries) == 0:
-        this.send.config(state = tk.ACTIVE)
+        if this.autoSendVar.get() == 0:
+            this.send.config(state = tk.ACTIVE)
         return
     deliveriesJson = json.dumps({"deliveries": deliveries})
     postResponse = requests.post("https://www.station-builder.free.nf/deliveryif.php", json=deliveriesJson)
     print(postResponse.text)
     if postResponse.text == "Accepted.":
         this.statusLabel.config(text="Deliveries sent!")
-        this.send.config(state = tk.ACTIVE)
+        if this.autoSendVar.get() == 0:
+            this.send.config(state = tk.ACTIVE)
 
 def sendDataInitiator():
     sendThread = threading.Thread(target=sendData)
@@ -44,7 +46,7 @@ def sendDataInitiator():
 def disableButton():
     if this.autoSendVar.get() == 1:
         this.send.config(state = tk.DISABLED)
-    else:
+    elif this.autoSendVar.get() == 0:
         this.send.config(state = tk.ACTIVE)
 
 def plugin_app(parent: tk.Frame) -> tk.Frame:
