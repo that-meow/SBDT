@@ -3,6 +3,10 @@ Station Builder Delivery Tracker
 
 This plugin for EDMC allows for automatic updates of delivery data on the https://station-builder.free.nf/ website.
 
+Installation:
+Download the ZIP file through GitHub (Code -> Download ZIP), then extract the SBDT-main folder into EDMC's plugin folder (File -> Plugins -> Open Plugin Folder).
+After this, restart EDMC, and the plugin will load automatically together with the app.
+
 Usage:
 When the Delivery Tracker successfully loads up, it'll show the name of the plugin ("Delivery Tracker") and the text "Deliveries will show up here."
 If EDMC is loaded while the ship's cargo is not empty, it'll display a warning message. EDMC can't see where you've bought the cargo, so if you load from a carrier, it can't register a carrier delivery.
