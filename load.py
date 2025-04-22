@@ -21,10 +21,10 @@ this.cargo = Cargo()
 this.autoSendVar = tk.IntVar()
 this.dirStr = ""
 this.currentMarket = {}
+this.currentStation = {}
 
 def sendData():
     this.send.config(state = tk.DISABLED)
-    print("Hi")
     deliveries = this.unsentDeliveries.copy()
     this.unsentDeliveries = []
     if len(deliveries) == 0:
@@ -33,8 +33,8 @@ def sendData():
         return
     deliveriesJson = json.dumps({"deliveries": deliveries})
     postResponse = requests.post("https://www.station-builder.free.nf/deliveryif.php", json=deliveriesJson)
-    print(postResponse.text)
-    if postResponse.text == "Accepted.":
+    if postResponse.text[-9:-1] == "Accepted":
+        print(postResponse.text)
         this.statusLabel.config(text="Deliveries sent!")
         if this.autoSendVar.get() == 0:
             this.send.config(state = tk.ACTIVE)
@@ -71,12 +71,17 @@ def plugin_start3(pluginDir):
 def journal_entry(cmdr, is_beta, system, station, entry, state):
     if entry["event"] == "Market": # Market and MarketBuy are workarounds for EDMC sometimes being slow to send/receive data
         this.currentMarket = {"ID": entry["MarketID"], "Station": entry["StationName"],  "System": entry["StarSystem"]}
+
+    elif entry["event"] == "Docked":
+        this.currentStation = {"StationName" : entry["StationName"]}
+
     if entry["event"] == "MarketBuy":
         if this.currentMarket["ID"] == entry["MarketID"]:
             this.cargo.buyCargo({entry["Type"]: entry["Count"]}, this.currentMarket["System"], this.currentMarket["Station"])
+
     elif entry["event"] == "Cargo":
         prevLen = len(this.unsentDeliveries)
-        this.unsentDeliveries.extend(this.cargo.updateCargo(state["Cargo"], system, station))
+        this.unsentDeliveries.extend(this.cargo.updateCargo(state["Cargo"], system, this.currentStation["StationName"]))
         for x in range(prevLen, len(this.unsentDeliveries)):
             if this.unsentDeliveries[x]["Name"] in this.commodities:
                 this.unsentDeliveries[x]["Name"] = this.commodities[this.unsentDeliveries[x]["Name"]]["name"]
@@ -89,9 +94,11 @@ def journal_entry(cmdr, is_beta, system, station, entry, state):
             else:
                 this.statusLabel.config(text=getText + strPrep)
 
-    elif entry["event"] == "StartJump" and this.autoSendVar.get() == 1:
-        sendThread = threading.Thread(target=sendData)
-        sendThread.start()
+    elif entry["event"] == "StartJump":
+        this.currentStation = {}
+        if this.autoSendVar.get() == 1:
+            sendThread = threading.Thread(target=sendData)
+            sendThread.start()
 
     elif entry["event"] == "StartUp":
         this.cargo.updateCargo(state["Cargo"], "Unknown", "Unknown")
